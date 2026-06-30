@@ -4,7 +4,12 @@ Provides dummy data generators to simulate GPS coordinates and
 accelerometer events (e.g., detecting a fall/man-down scenario) 
 without needing real physical hardware.
 """
+import random
 from typing import Tuple
+
+# Starting coordinates set to Cagliari, Sardinia for a realistic local test
+_current_lat = 39.2238
+_current_lon = 9.1217
 
 def read_gps() -> Tuple[float, float]:
     """Reads the current GPS coordinates.
@@ -15,7 +20,14 @@ def read_gps() -> Tuple[float, float]:
     Raises:
       IOError: If the simulated sensor cannot be read.
     """
-    pass
+    global _current_lat, _current_lon
+    try:
+        # Simulate movement with a small random walk
+        _current_lat += random.uniform(-0.0005, 0.0005)
+        _current_lon += random.uniform(-0.0005, 0.0005)
+        return (_current_lat, _current_lon)
+    except Exception as e:
+        raise IOError(f"Failed to read simulated GPS sensor: {e}")
 
 def check_man_down_event() -> bool:
     """Checks the accelerometer for a sudden drop or lack of movement.
@@ -23,4 +35,5 @@ def check_man_down_event() -> bool:
     Returns:
       True if a 'man-down' event is detected, False otherwise.
     """
-    pass
+    # 5% chance of triggering a man-down alert to simulate realistic anomalies
+    return random.random() < 0.05

@@ -19,7 +19,16 @@ def create_position_payload(lat: float, lon: float, timestamp: float) -> Dict[st
     Raises:
       ValueError: If latitude or longitude values are out of valid bounds.
     """
-    pass
+    if not (-90.0 <= lat <= 90.0):
+        raise ValueError(f"Invalid latitude: {lat}. Must be between -90 and 90.")
+    if not (-180.0 <= lon <= 180.0):
+        raise ValueError(f"Invalid longitude: {lon}. Must be between -180 and 180.")
+        
+    return {
+        "lat": float(lat),
+        "lon": float(lon),
+        "timestamp": float(timestamp)
+    }
 
 def create_liveliness_payload(status: str) -> Dict[str, Any]:
     """Constructs a payload for the liveliness token initialization.
@@ -30,4 +39,6 @@ def create_liveliness_payload(status: str) -> Dict[str, Any]:
     Returns:
       A dictionary representing the liveliness metadata.
     """
-    pass
+    return {
+        "status": str(status)
+    }

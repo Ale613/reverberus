@@ -5,6 +5,7 @@ the device does not run out of memory while retaining enough history
 to answer distributed queries from the Command Center.
 """
 from typing import List, Dict, Any
+from collections import deque
 
 class LocalStore:
     """A simple circular buffer for storing telemetry data."""
@@ -15,7 +16,7 @@ class LocalStore:
         Args:
           max_size: The maximum number of records to keep in memory.
         """
-        pass
+        self._store = deque(maxlen=max_size)
 
     def add_record(self, record: Dict[str, Any]) -> None:
         """Adds a new record to the store, evicting the oldest if full.
@@ -23,7 +24,7 @@ class LocalStore:
         Args:
           record: The telemetry data payload to store.
         """
-        pass
+        self._store.append(record)
 
     def get_all(self) -> List[Dict[str, Any]]:
         """Retrieves all currently stored records.
@@ -31,4 +32,4 @@ class LocalStore:
         Returns:
           A list of all telemetry records currently in the buffer.
         """
-        pass
+        return list(self._store)
