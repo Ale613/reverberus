@@ -4,9 +4,12 @@ Initializes the Zenoh session, sets up the CommandCenterManager,
 binds the UI callbacks, and starts the dashboard loop.
 """
 import json
+import threading
+import time
 from common.zenoh_utils import create_zenoh_session
 from command_center.manager import CommandCenterManager
-from command_center.dashboard import display_alert, render_telemetry_update, start_ui_loop
+from command_center.dashboard import display_alert, render_telemetry_update
+from command_center.web_server import WebServer
 
 def main() -> None:
     """Bootstraps and runs the command center lifecycle.
@@ -15,7 +18,15 @@ def main() -> None:
       RuntimeError: If the application cannot bind to the Zenoh network.
     """
     try:
+        # Initialize the web server (runs on separate thread)
+        print("[INFO] Starting web server...")
+        web_server = WebServer(host="0.0.0.0", port=8080)
+        web_thread = threading.Thread(target=lambda: web_server.run(debug=False), daemon=True)
+        web_thread.start()
+        time.sleep(1)  # Give Flask time to start
+        
         # Initialize the Zenoh P2P session
+        print("[INFO] Initializing Zenoh session...")
         session = create_zenoh_session(is_peer=True)
         manager = CommandCenterManager(session)
         
@@ -25,24 +36,31 @@ def main() -> None:
         # Callback for liveliness events
         def on_liveliness_event(sample):
             """Handles liveliness token events (operator connect/disconnect)."""
-            key = str(sample.key_expr)
-            is_alive = sample.kind == "Put"  # Put = token created, Delete = token dropped
-            
-            # Extract operator_id from key: soccorso/TEAM/OPERATOR_ID/liveliness
-            parts = key.split("/")
-            if len(parts) >= 3:
-                operator_id = parts[2]
-                team = parts[1]
+            try:
+                key = str(sample.key_expr)
+                is_alive = sample.kind == "Put"  # Put = token created, Delete = token dropped
                 
-                if is_alive:
-                    if operator_id not in active_operators:
-                        display_alert(operator_id, "RECONNECTED")
-                    active_operators[operator_id] = True
-                else:
-                    # Token dropped = signal lost
-                    if operator_id in active_operators:
-                        display_alert(operator_id, "SIGNAL_LOST")
-                    active_operators[operator_id] = False
+                # Extract operator_id from key: soccorso/TEAM/OPERATOR_ID/liveliness
+                parts = key.split("/")
+                if len(parts) >= 3:
+                    operator_id = parts[2]
+                    team = parts[1]
+                    
+                    if is_alive:
+                        if operator_id not in active_operators:
+                            alert_msg = f"Operator {operator_id} RECONNECTED"
+                            display_alert(operator_id, "RECONNECTED")
+                            web_server.broadcast_alert(operator_id, "RECONNECTED")
+                        active_operators[operator_id] = True
+                    else:
+                        # Token dropped = signal lost
+                        if operator_id in active_operators:
+                            alert_msg = f"Operator {operator_id} SIGNAL LOST"
+                            display_alert(operator_id, "SIGNAL_LOST")
+                            web_server.broadcast_alert(operator_id, "SIGNAL_LOST")
+                        active_operators[operator_id] = False
+            except Exception as e:
+                print(f"[ERROR] Liveliness callback failed: {e}")
         
         # Callback for position/telemetry updates
         def on_position_update(sample):
@@ -57,25 +75,40 @@ def main() -> None:
                 if len(parts) >= 3:
                     operator_id = parts[2]
                     
+                    print(f"[TELEMETRY] Received from {operator_id}: {data}")
+                    
                     # Check for emergency status
                     if data.get("status") == "EMERGENCY":
+                        alert_msg = f"Operator {operator_id} MAN DOWN!"
                         display_alert(operator_id, "MAN_DOWN")
+                        web_server.broadcast_alert(operator_id, "MAN_DOWN")
                     
-                    # Render normal telemetry update
+                    # Render normal telemetry update (terminal)
                     render_telemetry_update(operator_id, data)
+                    
+                    # Broadcast to web clients
+                    print(f"[WEB] Broadcasting telemetry for {operator_id} to web clients...")
+                    web_server.broadcast_telemetry(operator_id, data)
                     
             except Exception as e:
                 print(f"[ERROR] Failed to process position update: {e}")
+                import traceback
+                traceback.print_exc()
         
         # Establish Zenoh subscriptions
         print("[INFO] Connecting to Zenoh network...")
         manager.monitor_liveliness("alpha", on_liveliness_event)
         manager.subscribe_positions("alpha", on_position_update)
         
-        print("[INFO] Subscriptions established. Starting UI loop...")
+        print("[INFO] Subscriptions established.")
+        print("[INFO] Dashboard available at http://localhost:8080")
         
-        # Start the main dashboard loop
-        start_ui_loop()
+        # Keep the main thread alive to receive Zenoh callbacks
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[INFO] Shutdown requested...")
         
     except Exception as e:
         print(f"[FATAL] Command Center failed to initialize: {e}")
