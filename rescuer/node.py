@@ -1,12 +1,13 @@
 """Core logic for the Edge node running on the rescuer's device.
 
-This module integrates Zenoh to handle liveliness tokens, telemetry 
-publishing, and responding to historical data queries.
+This module integrates Zenoh to handle telemetry publishing and responding 
+to historical data queries via the Store & Forward mechanism.
 """
 import zenoh
 import json
 from typing import Dict, Any
 from rescuer.local_store import LocalStore
+from common.config import get_key_expr
 
 class RescuerNode:
     """Manages all Zenoh network interactions for a single operator."""
@@ -23,22 +24,13 @@ class RescuerNode:
         self.team = team
         self.operator_id = operator_id
         self.store = LocalStore(max_size=100)
-        self.base_path = f"telemetry/{self.team}/{self.operator_id}"
         self.pub = None
         self.queryable = None
 
-    def start_liveliness_token(self) -> None:
-        """Declares a Zenoh Liveliness Token for the operator.
-
-        If the node disconnects or crashes, Zenoh will automatically 
-        notify subscribers (Command Center) of the token drop.
-        """
-        key = f"liveliness/{self.team}/{self.operator_id}"
-        self.session.liveliness.declare_token(key)
-
     def start_telemetry_publisher(self) -> None:
-        """Declares a Zenoh publisher for real-time GPS coordinates."""
-        self.pub = self.session.declare_publisher(f"{self.base_path}/pos")
+        """Declares a Zenoh publisher for real-time telemetry."""
+        key = get_key_expr(self.team, self.operator_id, "position")
+        self.pub = self.session.declare_publisher(key)
 
     def publish_position(self, data: Dict[str, Any]) -> None:
         """Publishes the position payload to the telemetry topic.
@@ -62,11 +54,29 @@ class RescuerNode:
         Registers a callback that retrieves data from the LocalStore 
         and replies to the incoming query via the Zenoh session.
         """
+        key = get_key_expr(self.team, self.operator_id, "history")
+        
         def callback(query):
-            # Reply with the content of our local store as JSON
-            data = json.dumps(self.store.get_all())
-            query.reply(query.key_expr, data)
+            """Internal queryable callback to serve historical data."""
+            try:
+                # Reply with the content of our local store as JSON
+                data = json.dumps(self.store.get_all())
+                query.reply(query.key_expr, data)
+            except Exception as e:
+                print(f"[ERROR] Queryable callback failed: {e}")
 
-        self.queryable = self.session.declare_queryable(
-            f"{self.base_path}/history", callback
-        )
+        self.queryable = self.session.declare_queryable(key, callback)
+
+    def close(self) -> None:
+        """Cleanly closes all Zenoh resources.
+
+        Closes the publisher and queryable.
+        Call this method before shutting down the node.
+        """
+        if self.pub is not None:
+            self.pub.close()
+            self.pub = None
+        
+        if self.queryable is not None:
+            self.queryable.close()
+            self.queryable = None

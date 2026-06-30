@@ -25,4 +25,7 @@ def get_key_expr(
     Raises:
       ValueError: If the provided topic_type is not recognized.
     """
-    pass
+    if topic_type not in ["liveliness", "position", "history"]:
+        raise ValueError(f"Unknown topic_type: {topic_type}")
+    
+    return f"{BASE_PATH}/{team}/{operator_id}/{topic_type}"
