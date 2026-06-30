@@ -3,10 +3,10 @@
 Initializes the Zenoh session, sets up the RescuerNode, starts the 
 dummy sensors, and enters the main publishing loop.
 """
-import zenoh
 import time
 import random
 from datetime import datetime
+from common.zenoh_utils import create_zenoh_session
 from rescuer.node import RescuerNode
 from rescuer import sensors
 
@@ -22,9 +22,8 @@ def main() -> None:
     
     print(f"Inizializzation Rescuer Node: {OPERATOR_ID} (Team: {TEAM})")
     
-    # Inizializzation Zenoh session
-    config = zenoh.Config() 
-    session = zenoh.open(config)
+    # Inizializzation Zenoh session using the shared peer configuration
+    session = create_zenoh_session(is_peer=True)
     node = RescuerNode(session, TEAM, OPERATOR_ID)
     
     # Start Zenoh services

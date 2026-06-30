@@ -67,33 +67,25 @@ class WebServer:
             print("[WEB] Client disconnected")
 
     def broadcast_telemetry(self, operator_id: str, data: dict) -> None:
-        """Broadcasts telemetry update to all connected clients.
-
-        Args:
-          operator_id: The ID of the operator sending the telemetry.
-          data: The telemetry payload (lat, lon, heart_rate, status, etc.).
-        """
+        """Broadcasts telemetry update to all connected clients."""
         try:
+            # Rimosso broadcast=True, poiché è il comportamento predefinito
             self.socketio.emit("telemetry", {
                 "operator_id": operator_id,
                 "data": data
-            }, broadcast=True, skip_queue=True)
+            })
             print(f"[WEB] Broadcast telemetry for {operator_id}")
         except Exception as e:
             print(f"[WEB ERROR] Failed to broadcast telemetry: {e}")
 
     def broadcast_alert(self, operator_id: str, alert_type: str) -> None:
-        """Broadcasts an alert event to all connected clients.
-
-        Args:
-          operator_id: The ID of the affected operator.
-          alert_type: The alert type (e.g., 'MAN_DOWN', 'SIGNAL_LOST').
-        """
+        """Broadcasts an alert event to all connected clients."""
         try:
+            # Rimosso broadcast=True
             self.socketio.emit("alert", {
                 "operator_id": operator_id,
                 "alert_type": alert_type
-            }, broadcast=True, skip_queue=True)
+            })
             print(f"[WEB] Broadcast alert: {operator_id} - {alert_type}")
         except Exception as e:
             print(f"[WEB ERROR] Failed to broadcast alert: {e}")

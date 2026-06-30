@@ -70,13 +70,13 @@ class RescuerNode:
     def close(self) -> None:
         """Cleanly closes all Zenoh resources.
 
-        Closes the publisher and queryable.
+        Sets references to None to allow garbage collection.
         Call this method before shutting down the node.
         """
+        # In Zenoh, basta eliminare il riferimento all'oggetto.
+        # Non esiste il metodo .close() per publisher e queryable.
         if self.pub is not None:
-            self.pub.close()
             self.pub = None
         
         if self.queryable is not None:
-            self.queryable.close()
             self.queryable = None
