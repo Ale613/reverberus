@@ -38,21 +38,28 @@ pip install -r requirements.txt
 
 ### Running the Demo
 
-1. **Start the Cloud Backend**:
+1. **Start the Zenoh Router**:
+```bash
+.\zenohd.exe -l tcp/0.0.0.0:7447
+
+```
+
+
+2. **Start the Cloud Backend**:
 ```bash
 python -m cloud_backend
 
 ```
 
 
-2. **Start the Command Center**:
+3. **Start the Command Center**:
 ```bash
 python -m main_cmd_center
 
 ```
 
 
-3. **Start the Rescuer Node**:
+4. **Start the Rescuer Node**:
 ```bash
 python -m main_rescuer
 

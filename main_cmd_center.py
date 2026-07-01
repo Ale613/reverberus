@@ -19,6 +19,7 @@ def main() -> None:
       RuntimeError: If the application cannot bind to the Zenoh network.
     """
     try:
+        ROUTER_IP = "25.7.53.21"
         # Initialize the web server (runs on separate thread)
         print("[INFO] Starting web server...")
         web_server = WebServer(host="0.0.0.0", port=8080)
@@ -29,7 +30,7 @@ def main() -> None:
         # Initialize the Zenoh P2P session
         print("[INFO] Initializing Zenoh session...")
         #session = create_zenoh_session(is_peer=True)
-        session = create_zenoh_session(is_peer=False, connect_ip="25.7.53.21")
+        session = create_zenoh_session(is_peer=False, connect_ip= ROUTER_IP)
         manager = CommandCenterManager(session)
         
         cloud_publisher = session.declare_publisher("rescue/global/alerts")
