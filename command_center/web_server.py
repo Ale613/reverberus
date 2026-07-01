@@ -2,15 +2,15 @@
 
 Provides HTTP serving of the UI and WebSocket channels for live telemetry streaming.
 """
-from flask import Flask, render_template_string
-from flask_socketio import SocketIO, emit, disconnect
-import os
+from flask import Flask
+from flask_socketio import SocketIO, emit
 from pathlib import Path
+from typing import Optional
 
 class WebServer:
     """Manages the Flask web server and WebSocket connections."""
 
-    def __init__(self, host: str = "localhost", port: int = 8080):
+    def __init__(self, host: str = "localhost", port: int = 8080, manager=None):
         """Initializes the Flask application and SocketIO.
 
         Args:
@@ -23,11 +23,16 @@ class WebServer:
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         self.host = host
         self.port = port
+        self.manager = manager
         self.connected_clients = set()
         
         # Setup routes and WebSocket handlers
         self._setup_routes()
         self._setup_websocket()
+
+    def attach_manager(self, manager) -> None:
+        """Attaches the manager used to service RPC-like requests."""
+        self.manager = manager
 
     def _setup_routes(self):
         """Configures HTTP routes."""
@@ -66,25 +71,50 @@ class WebServer:
             """Handles WebSocket client disconnections."""
             print("[WEB] Client disconnected")
 
-    def broadcast_telemetry(self, operator_id: str, data: dict) -> None:
+        @self.socketio.on("request_history")
+        def handle_request_history(payload):
+            """Handles a manual history request from the dashboard."""
+            try:
+                team = payload.get("team")
+                operator_id = payload.get("operator_id")
+
+                if not self.manager:
+                    return {"ok": False, "error": "History service is unavailable"}
+
+                if not team or not operator_id:
+                    return {"ok": False, "error": "Missing team or operator identifier"}
+
+                history = self.manager.request_history(team, operator_id)
+                print(f"[WEB] History requested for {team}/{operator_id} ({len(history)} records)")
+                return {
+                    "ok": True,
+                    "team": team,
+                    "operator_id": operator_id,
+                    "history": history,
+                }
+            except Exception as e:
+                print(f"[WEB ERROR] Failed to fulfill history request: {e}")
+                return {"ok": False, "error": str(e)}
+
+    def broadcast_telemetry(self, operator_id: str, data: dict, team: Optional[str] = None) -> None:
         """Broadcasts telemetry update to all connected clients."""
         try:
-            # Rimosso broadcast=True, poiché è il comportamento predefinito
             self.socketio.emit("telemetry", {
                 "operator_id": operator_id,
-                "data": data
+                "team": team,
+                "data": data,
             })
             print(f"[WEB] Broadcast telemetry for {operator_id}")
         except Exception as e:
             print(f"[WEB ERROR] Failed to broadcast telemetry: {e}")
 
-    def broadcast_alert(self, operator_id: str, alert_type: str) -> None:
+    def broadcast_alert(self, operator_id: str, alert_type: str, team: Optional[str] = None) -> None:
         """Broadcasts an alert event to all connected clients."""
         try:
-            # Rimosso broadcast=True
             self.socketio.emit("alert", {
                 "operator_id": operator_id,
-                "alert_type": alert_type
+                "team": team,
+                "alert_type": alert_type,
             })
             print(f"[WEB] Broadcast alert: {operator_id} - {alert_type}")
         except Exception as e:
