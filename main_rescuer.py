@@ -38,7 +38,7 @@ def main() -> None:
         while True:
             # mock data for hackaton
             lat, lon = sensors.read_gps()
-            is_man_down = sensors.check_man_down_event()
+            is_man_down = sensors.check_man_down_event(lat, lon)
             
             data = {
                 "timestamp": datetime.now().isoformat(),

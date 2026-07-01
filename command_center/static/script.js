@@ -160,6 +160,9 @@ function handleAlert(operatorId, alertType) {
         } else if (alertType === "RECONNECTED") {
             alertIcon = "✓";
             alertTitle = "RECONNECTED";
+        } else if (alertType === "OK") {
+            alertIcon = "✓";
+            alertTitle = "RESUMED MOVING";
         }
         
         const alertItem = {

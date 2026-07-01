@@ -33,6 +33,7 @@ def main() -> None:
         
         # Track active operators and signal loss timeouts
         active_operators = {}
+        operator_emergency_states = {}
         
         # Callback for liveliness events
         def on_liveliness_event(sample):
@@ -75,14 +76,24 @@ def main() -> None:
                 parts = key.split("/")
                 if len(parts) >= 3:
                     operator_id = parts[2]
+                    current_status = data.get("status")
                     
                     print(f"[TELEMETRY] Received from {operator_id}: {data}")
                     
-                    # Check for emergency status
-                    if data.get("status") == "EMERGENCY":
-                        alert_msg = f"Operator {operator_id} MAN DOWN!"
-                        display_alert(operator_id, "MAN_DOWN")
-                        web_server.broadcast_alert(operator_id, "MAN_DOWN")
+                    # Logica di transizione degli stati di emergenza
+                    if current_status == "EMERGENCY":
+                        # Se non era già in emergenza, lancia l'allarme
+                        if operator_emergency_states.get(operator_id) != "EMERGENCY":
+                            operator_emergency_states[operator_id] = "EMERGENCY"
+                            display_alert(operator_id, "MAN_DOWN")
+                            web_server.broadcast_alert(operator_id, "MAN_DOWN")
+                            
+                    elif current_status == "OK":
+                        # Se era in emergenza e ora è OK, significa che ha ripreso a muoversi
+                        if operator_emergency_states.get(operator_id) == "EMERGENCY":
+                            operator_emergency_states[operator_id] = "OK"
+                            display_alert(operator_id, "ALL_CLEAR")
+                            web_server.broadcast_alert(operator_id, "ALL_CLEAR")
                     
                     # Render normal telemetry update (terminal)
                     render_telemetry_update(operator_id, data)
@@ -95,7 +106,7 @@ def main() -> None:
                 print(f"[ERROR] Failed to process position update: {e}")
                 import traceback
                 traceback.print_exc()
-        
+
         # Establish Zenoh subscriptions
         print("[INFO] Connecting to Zenoh network...")
         manager.monitor_liveliness("alpha", on_liveliness_event)
