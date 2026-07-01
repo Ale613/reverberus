@@ -2,6 +2,10 @@
 import zenoh
 import time
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main() -> None:
     print("[CLOUD] Starting National Rescue Cloud Center...")
@@ -9,7 +13,7 @@ def main() -> None:
     # Initialize Zenoh in client mode (typical for cloud instances)
     conf = zenoh.Config()
     conf.insert_json5("mode", '"client"')
-    ROUTER_IP = "25.7.53.21"
+    ROUTER_IP = os.getenv("ROUTER_IP")
     conf.insert_json5("connect/endpoints", f'["tcp/{ROUTER_IP}:7447"]')
     
     session = zenoh.open(conf)

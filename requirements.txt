@@ -1,6 +1,9 @@
 # Core Zenoh Python binding for P2P communication
 eclipse-zenoh
 
+# Environment variable management
+python-dotenv
+
 # Pydantic for robust data validation and payload modeling
 pydantic
 

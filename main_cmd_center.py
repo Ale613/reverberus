@@ -3,6 +3,8 @@
 Initializes the Zenoh session, sets up the CommandCenterManager, 
 binds the UI callbacks, and starts the dashboard loop.
 """
+import os
+
 import zenoh
 import json
 import threading
@@ -11,6 +13,9 @@ from common.zenoh_utils import create_zenoh_session
 from command_center.manager import CommandCenterManager
 from command_center.dashboard import display_alert, render_telemetry_update
 from command_center.web_server import WebServer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main() -> None:
     """Bootstraps and runs the command center lifecycle.
@@ -19,7 +24,7 @@ def main() -> None:
       RuntimeError: If the application cannot bind to the Zenoh network.
     """
     try:
-        ROUTER_IP = "25.7.53.21"
+        ROUTER_IP = os.getenv("ROUTER_IP")
         # Initialize the web server (runs on separate thread)
         print("[INFO] Starting web server...")
         web_server = WebServer(host="0.0.0.0", port=8080)
