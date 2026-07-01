@@ -32,7 +32,7 @@ def read_gps() -> Tuple[float, float]:
     
     current_time = time.time()
     
-    if not _is_simulating_stop and random.random() < 0.20: 
+    if not _is_simulating_stop and random.random() < 0.05: 
         _is_simulating_stop = True
         _stop_start_time = current_time
         print("\n[GPS STOP] The operator has stopped moving!")

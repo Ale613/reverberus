@@ -30,6 +30,7 @@ def main() -> None:
         print("[INFO] Initializing Zenoh session...")
         session = create_zenoh_session(is_peer=True)
         manager = CommandCenterManager(session)
+        web_server.attach_manager(manager)
         
         # Track active operators and signal loss timeouts
         active_operators = {}
@@ -50,16 +51,14 @@ def main() -> None:
                     
                     if is_alive:
                         if operator_id not in active_operators:
-                            alert_msg = f"Operator {operator_id} RECONNECTED"
                             display_alert(operator_id, "RECONNECTED")
-                            web_server.broadcast_alert(operator_id, "RECONNECTED")
+                            web_server.broadcast_alert(operator_id, "RECONNECTED", team=team)
                         active_operators[operator_id] = True
                     else:
                         # Token dropped = signal lost
                         if operator_id in active_operators:
-                            alert_msg = f"Operator {operator_id} SIGNAL LOST"
                             display_alert(operator_id, "SIGNAL_LOST")
-                            web_server.broadcast_alert(operator_id, "SIGNAL_LOST")
+                            web_server.broadcast_alert(operator_id, "SIGNAL_LOST", team=team)
                         active_operators[operator_id] = False
             except Exception as e:
                 print(f"[ERROR] Liveliness callback failed: {e}")
@@ -76,6 +75,7 @@ def main() -> None:
                 parts = key.split("/")
                 if len(parts) >= 3:
                     operator_id = parts[2]
+                    team = parts[1]
                     current_status = data.get("status")
                     
                     print(f"[TELEMETRY] Received from {operator_id}: {data}")
@@ -86,21 +86,21 @@ def main() -> None:
                         if operator_emergency_states.get(operator_id) != "EMERGENCY":
                             operator_emergency_states[operator_id] = "EMERGENCY"
                             display_alert(operator_id, "MAN_DOWN")
-                            web_server.broadcast_alert(operator_id, "MAN_DOWN")
+                            web_server.broadcast_alert(operator_id, "MAN_DOWN", team=team)
                             
                     elif current_status == "OK":
                         # Se era in emergenza e ora è OK, significa che ha ripreso a muoversi
                         if operator_emergency_states.get(operator_id) == "EMERGENCY":
                             operator_emergency_states[operator_id] = "OK"
                             display_alert(operator_id, "RESUMED MOVING")
-                            web_server.broadcast_alert(operator_id, "OK")
+                            web_server.broadcast_alert(operator_id, "OK", team=team)
                     
                     # Render normal telemetry update (terminal)
                     render_telemetry_update(operator_id, data)
                     
                     # Broadcast to web clients
                     print(f"[WEB] Broadcasting telemetry for {operator_id} to web clients...")
-                    web_server.broadcast_telemetry(operator_id, data)
+                    web_server.broadcast_telemetry(operator_id, data, team=team)
                     
             except Exception as e:
                 print(f"[ERROR] Failed to process position update: {e}")
