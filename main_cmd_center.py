@@ -30,7 +30,7 @@ def main() -> None:
         # Initialize the Zenoh P2P session
         print("[INFO] Initializing Zenoh session...")
         #session = create_zenoh_session(is_peer=True)
-        session = create_zenoh_session(is_peer=False, connect_ip= ROUTER_IP)
+        session = create_zenoh_session(is_peer=True, connect_ip= ROUTER_IP)
         manager = CommandCenterManager(session)
         web_server.attach_manager(manager)
         

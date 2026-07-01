@@ -19,20 +19,19 @@ def create_zenoh_session(is_peer: bool = True, connect_ip: str = None) -> zenoh.
       RuntimeError: If the Zenoh subsystem fails to initialize or connect.
     """
     try:
-        # Initialize a default Zenoh configuration
         conf = zenoh.Config()
-        
-        # Explicitly set the networking mode
+    
         if is_peer:
             conf.insert_json5("mode", '"peer"')
         else:
             conf.insert_json5("mode", '"client"')
+            
+        # Optional: Even if it's a peer, you can tell it to look for a cloud router
+        if connect_ip:
             endpoints = f'["tcp/{connect_ip}:7447"]'
             conf.insert_json5("connect/endpoints", endpoints)
-            print(f"[ZENOH] Connecting as CLIENT to router at {endpoints}")
-        # Open and return the Zenoh session
-        session = zenoh.open(conf)
-        return session
+                
+        return zenoh.open(conf)
         
     except Exception as e:
         raise RuntimeError(f"Failed to initialize Zenoh session: {e}")
