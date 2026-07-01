@@ -18,7 +18,8 @@ Reverberus is an innovative IoT solution designed for rescue teams operating in 
 
 ### Prerequisites
 * Python 3.10+
-* [Eclipse Zenoh](https://zenoh.io/) (installed via `pip install zenoh`)
+* [Eclipse Zenoh](https://zenoh.io/) (installed via `pip install eclipse-zenoh`)
+* Zenoh Router (`zenohd`) binary for Windows
 
 ### Installation
 1. Clone the repository:
@@ -69,7 +70,7 @@ python -m main_rescuer
 
 ## License
 
-This project is licensed under the Apache License 2.0. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the Apache License 2.0. See the LICENSE file for details.
 
 ## Contributing
 
