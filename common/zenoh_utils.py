@@ -27,7 +27,9 @@ def create_zenoh_session(is_peer: bool = True, connect_ip: str = None) -> zenoh.
             conf.insert_json5("mode", '"peer"')
         else:
             conf.insert_json5("mode", '"client"')
-            
+            endpoints = f'["tcp/{connect_ip}:7447"]'
+            conf.insert_json5("connect/endpoints", endpoints)
+            print(f"[ZENOH] Connecting as CLIENT to router at {endpoints}")
         # Open and return the Zenoh session
         session = zenoh.open(conf)
         return session
