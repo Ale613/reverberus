@@ -23,8 +23,7 @@ def main() -> None:
     print(f"Inizializzation Rescuer Node: {OPERATOR_ID} (Team: {TEAM})")
     
     # Inizializzation Zenoh session using the shared peer configuration
-    ROUTER_IP = "127.0.0.1" 
-    session = create_zenoh_session(is_peer=False, connect_ip=ROUTER_IP)
+    session = create_zenoh_session(is_peer=True)
     node = RescuerNode(session, TEAM, OPERATOR_ID)
     
     # Start Zenoh services
