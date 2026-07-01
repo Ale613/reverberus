@@ -27,6 +27,7 @@ def main() -> None:
     node = RescuerNode(session, TEAM, OPERATOR_ID)
     
     # Start Zenoh services
+    node.setup_liveliness()
     node.start_telemetry_publisher()
     node.setup_queryable_store()
     

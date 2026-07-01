@@ -26,6 +26,15 @@ class RescuerNode:
         self.store = LocalStore(max_size=100)
         self.pub = None
         self.queryable = None
+        self.liveliness_token = None
+
+    def setup_liveliness(self) -> None:
+        """Declares a Liveliness token for this specific operator."""
+        # We create a specific path for liveliness, e.g., 'team/alpha/op_123/liveliness'
+        key = get_key_expr(self.team, self.operator_id, "liveliness")
+        
+        self.liveliness_token = self.session.liveliness().declare_token(key)
+        print(f"[ZENOH] Liveliness token declared on: {key}")
 
     def start_telemetry_publisher(self) -> None:
         """Declares a Zenoh publisher for real-time telemetry."""
@@ -80,3 +89,6 @@ class RescuerNode:
         
         if self.queryable is not None:
             self.queryable = None
+
+        if self.liveliness_token is not None:
+            self.liveliness_token = None

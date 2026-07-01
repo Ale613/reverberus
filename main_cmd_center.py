@@ -3,6 +3,7 @@
 Initializes the Zenoh session, sets up the CommandCenterManager, 
 binds the UI callbacks, and starts the dashboard loop.
 """
+import zenoh
 import json
 import threading
 import time
@@ -38,7 +39,7 @@ def main() -> None:
             """Handles liveliness token events (operator connect/disconnect)."""
             try:
                 key = str(sample.key_expr)
-                is_alive = sample.kind == "Put"  # Put = token created, Delete = token dropped
+                is_alive = sample.kind == zenoh.SampleKind.PUT
                 
                 # Extract operator_id from key: soccorso/TEAM/OPERATOR_ID/liveliness
                 parts = key.split("/")

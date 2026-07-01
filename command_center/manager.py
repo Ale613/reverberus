@@ -46,7 +46,7 @@ class CommandCenterManager:
                 except Exception as e:
                     print(f"[ERROR] Liveliness callback failed: {e}")
             
-            sub = self.session.declare_subscriber(key_pattern, liveliness_callback)
+            sub = self.session.liveliness().declare_subscriber(key_pattern, liveliness_callback)
             self.subscribers.append(sub)
             
         except Exception as e:
