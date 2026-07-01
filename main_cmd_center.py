@@ -28,9 +28,13 @@ def main() -> None:
         
         # Initialize the Zenoh P2P session
         print("[INFO] Initializing Zenoh session...")
-        session = create_zenoh_session(is_peer=True)
+        #session = create_zenoh_session(is_peer=True)
+        session = create_zenoh_session(is_peer=False, connect_ip="25.7.53.21")
         manager = CommandCenterManager(session)
         
+        cloud_publisher = session.declare_publisher("rescue/global/alerts")
+        print("[INFO] Cloud Gateway active. Ready to forward critical data.")
+
         # Track active operators and signal loss timeouts
         active_operators = {}
         operator_emergency_states = {}
@@ -87,6 +91,17 @@ def main() -> None:
                             operator_emergency_states[operator_id] = "EMERGENCY"
                             display_alert(operator_id, "MAN_DOWN")
                             web_server.broadcast_alert(operator_id, "MAN_DOWN")
+
+                            print(f"[GATEWAY] Forwarding MAN_DOWN alert for {operator_id} to the Cloud!")
+                            cloud_payload = json.dumps({
+                                "operator_id": operator_id,
+                                "team": "alpha",
+                                "alert_type": "MAN_DOWN",
+                                "timestamp": data.get("timestamp"),
+                                "last_lat": data.get("lat"),
+                                "last_lon": data.get("lon")
+                            })
+                            cloud_publisher.put(cloud_payload)
                             
                     elif current_status == "OK":
                         # Se era in emergenza e ora è OK, significa che ha ripreso a muoversi
