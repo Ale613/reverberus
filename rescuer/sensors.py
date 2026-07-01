@@ -23,8 +23,8 @@ def read_gps() -> Tuple[float, float]:
     global _current_lat, _current_lon
     try:
         # Simulate movement with a small random walk
-        _current_lat += random.uniform(-0.0005, 0.0005)
-        _current_lon += random.uniform(-0.0005, 0.0005)
+        _current_lat += random.uniform(-0.0001, 0.0001)
+        _current_lon += random.uniform(-0.0001, 0.0001)
         return (_current_lat, _current_lon)
     except Exception as e:
         raise IOError(f"Failed to read simulated GPS sensor: {e}")
