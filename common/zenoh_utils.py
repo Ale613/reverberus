@@ -5,7 +5,7 @@ for both the Edge nodes (Rescuer) and the Command Center.
 """
 import zenoh
 
-def create_zenoh_session(is_peer: bool = True) -> zenoh.Session:
+def create_zenoh_session(is_peer: bool = True, connect_ip: str = None) -> zenoh.Session:
     """Initializes and returns a connected Zenoh session.
 
     Args:
