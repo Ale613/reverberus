@@ -34,7 +34,7 @@ def main() -> None:
         # Track active operators and signal loss timeouts
         active_operators = {}
         operator_emergency_states = {}
-        
+
         # Callback for liveliness events
         def on_liveliness_event(sample):
             """Handles liveliness token events (operator connect/disconnect)."""
@@ -92,8 +92,8 @@ def main() -> None:
                         # Se era in emergenza e ora è OK, significa che ha ripreso a muoversi
                         if operator_emergency_states.get(operator_id) == "EMERGENCY":
                             operator_emergency_states[operator_id] = "OK"
-                            display_alert(operator_id, "ALL_CLEAR")
-                            web_server.broadcast_alert(operator_id, "ALL_CLEAR")
+                            display_alert(operator_id, "RESUMED MOVING")
+                            web_server.broadcast_alert(operator_id, "OK")
                     
                     # Render normal telemetry update (terminal)
                     render_telemetry_update(operator_id, data)
