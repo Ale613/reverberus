@@ -124,11 +124,18 @@ function handleTelemetry(payload) {
         }
 
         const normalizedStatus = normalizeTelemetryStatus(data.status);
+
+        // Se riceve telemetria, significa che è connesso
+        if (operator.connectionState === "disconnected") {
+            operator.connectionState = "online";
+        }
         operator.telemetryState = normalizedStatus;
 
-        if (operator.connectionState !== "disconnected") operator.connectionState = "online";
-        if (normalizedStatus === "man_down") operator.alertState = "man_down";
-        else if (operator.alertState === "man_down" && normalizedStatus === "online") operator.alertState = "idle"; // Auto-resolve locally
+        if (normalizedStatus === "man_down") {
+            operator.alertState = "man_down";
+        } else if (operator.alertState === "man_down" && normalizedStatus === "online") {
+            operator.alertState = "idle"; // L'uomo si rialza e riprende a muoversi
+        }
 
         if (normalizedStatus === "online") resolveOpenAlertForOperator(operatorId);
 
@@ -150,9 +157,12 @@ function handleAlert(payload) {
 
         if (alertType === "SIGNAL_LOST") {
             operator.connectionState = "disconnected";
-            operator.telemetryState = "degraded";
+            operator.telemetryState = "offline";
+            operator.alertState = "signal_lost";
         } else if (alertType === "RECONNECTED") {
             operator.connectionState = "online";
+            operator.telemetryState = "online";
+            operator.alertState = "idle";
         }
 
         if (alertType === "OK" || alertType === "RECONNECTED") {
@@ -169,13 +179,16 @@ function handleAlert(payload) {
             };
             DASHBOARD_STATE.alerts.unshift(activeAlert);
             DASHBOARD_STATE.alerts = DASHBOARD_STATE.alerts.slice(0, ALERT_LIMIT);
-            operator.alertState = alertType === "MAN_DOWN" ? "man_down" : "degraded";
+            
+            if (alertType === "MAN_DOWN") {
+                operator.alertState = "man_down";
+                flashWorkspace(); 
+                playBeep();
+            }
         }
 
         updateOperatorMarker(operator);
         renderDashboard();
-
-        if (alertType === "MAN_DOWN") { flashWorkspace(); playBeep(); }
     } catch (error) { console.error("Alert error:", error); }
 }
 
@@ -183,7 +196,7 @@ function ensureOperator(operatorId, team) {
     if (!DASHBOARD_STATE.operators.has(operatorId)) {
         DASHBOARD_STATE.operators.set(operatorId, {
             operatorId, team, latitude: null, longitude: null, heartRate: null,
-            telemetryState: "unknown", connectionState: "offline", alertState: "idle",
+            telemetryState: "offline", connectionState: "offline", alertState: "idle",
             trend: [], lastSeenLabel: "--:--:--", marker: null
         });
     }
@@ -198,21 +211,19 @@ function normalizeTelemetryStatus(status) {
     const n = String(status || "").toUpperCase();
     if (n === "EMERGENCY") return "man_down";
     if (n === "OK" || n === "ACTIVE" || n === "RESOLVED" || n === "RECONNECTED") return "online";
-    if (n === "DEGRADED" || n === "SIGNAL_LOST") return "degraded";
+    if (n === "SIGNAL_LOST") return "disconnected";
     return n ? n.toLowerCase() : "offline";
 }
 
 function getMarkerClass(operator) {
     if (operator.alertState === "man_down") return "operator-marker--man_down";
     if (operator.connectionState === "disconnected") return "operator-marker--disconnected";
-    if (operator.telemetryState === "degraded") return "operator-marker--degraded";
     return "operator-marker--online";
 }
 
 function getMarkerColor(operator) {
     if (operator.alertState === "man_down") return "var(--danger)";
     if (operator.connectionState === "disconnected") return "var(--archive)";
-    if (operator.telemetryState === "degraded") return "var(--degraded)";
     return "var(--online)";
 }
 
@@ -237,8 +248,7 @@ function renderFilterOptions() {
 
 function getUiStatus(operator) {
     if (operator.alertState === "man_down") return "man_down";
-    if (operator.connectionState === "disconnected") return "disconnected";
-    if (operator.telemetryState === "degraded") return "degraded";
+    if (operator.connectionState === "disconnected") return "signal_lost";
     if (operator.telemetryState === "online" || operator.connectionState === "online") return "online";
     return "offline";
 }
@@ -351,8 +361,8 @@ function handleAlertAction(action, alertId) {
             // Pulisce lo stato se l'allarme eliminato manualmente è l'ultimo
             const operator = DASHBOARD_STATE.operators.get(alert.operatorId);
             if (operator) {
-                operator.alertState = "idle";
-                if (alert.type === "SIGNAL_LOST") operator.connectionState = "online";
+                if (operator.alertState === "man_down" && alert.type === "MAN_DOWN") operator.alertState = "idle";
+                if (operator.alertState === "signal_lost" && alert.type === "SIGNAL_LOST") operator.alertState = "idle";
                 updateOperatorMarker(operator);
             }
         }
@@ -361,9 +371,8 @@ function handleAlertAction(action, alertId) {
 }
 
 function resolveOpenAlertForOperator(operatorId) {
-    // Rimuove l'allarme dalla coda
-    const idx = DASHBOARD_STATE.alerts.findIndex((item) => item.operatorId === operatorId);
-    if (idx !== -1) DASHBOARD_STATE.alerts.splice(idx, 1);
+    // Rimuove tutti gli allarmi legati a questo operatore
+    DASHBOARD_STATE.alerts = DASHBOARD_STATE.alerts.filter((item) => item.operatorId !== operatorId);
 
     const operator = DASHBOARD_STATE.operators.get(operatorId);
     if (operator) {
