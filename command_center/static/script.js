@@ -125,7 +125,7 @@ function handleTelemetry(payload) {
 
         const normalizedStatus = normalizeTelemetryStatus(data.status);
 
-        // Se riceve telemetria, significa che è connesso
+        // Receiving telemetry means the operator is connected
         if (operator.connectionState === "disconnected") {
             operator.connectionState = "online";
         }
@@ -134,7 +134,7 @@ function handleTelemetry(payload) {
         if (normalizedStatus === "man_down") {
             operator.alertState = "man_down";
         } else if (operator.alertState === "man_down" && normalizedStatus === "online") {
-            operator.alertState = "idle"; // L'uomo si rialza e riprende a muoversi
+            operator.alertState = "idle"; // The operator is back on their feet and moving again
         }
 
         if (normalizedStatus === "online") resolveOpenAlertForOperator(operatorId);
@@ -358,7 +358,7 @@ function handleAlertAction(action, alertId) {
             const alert = DASHBOARD_STATE.alerts[idx];
             DASHBOARD_STATE.alerts.splice(idx, 1);
             
-            // Pulisce lo stato se l'allarme eliminato manualmente è l'ultimo
+            // Clear the state if the manually dismissed alert was the last one
             const operator = DASHBOARD_STATE.operators.get(alert.operatorId);
             if (operator) {
                 if (operator.alertState === "man_down" && alert.type === "MAN_DOWN") operator.alertState = "idle";
@@ -371,7 +371,7 @@ function handleAlertAction(action, alertId) {
 }
 
 function resolveOpenAlertForOperator(operatorId) {
-    // Rimuove tutti gli allarmi legati a questo operatore
+    // Remove all alerts related to this operator
     DASHBOARD_STATE.alerts = DASHBOARD_STATE.alerts.filter((item) => item.operatorId !== operatorId);
 
     const operator = DASHBOARD_STATE.operators.get(operatorId);

@@ -76,7 +76,7 @@ body {
 .operator-card__sparkline svg { width: 100%; height: 28px; display: block; }
 .operator-card__status, .alert-card__status { padding: 6px 10px; border-radius: 999px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; background: rgba(148, 163, 184, 0.14); color: var(--muted); }
 
-/* Colori degli stati (Solo Verde, Rosso o Grigio) */
+/* Status colors (green, red, or gray only) */
 .operator-card__status--online { color: var(--online); background: rgba(45, 213, 138, 0.14); }
 .operator-card__status--signal_lost, .operator-card__status--offline { color: var(--archive); background: rgba(128, 144, 168, 0.14); }
 .operator-card__status--man_down, .alert-card__status--active { color: var(--danger); background: rgba(255, 93, 114, 0.14); }
@@ -97,7 +97,7 @@ body {
 .alert-card__row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .alert-card__title { font-weight: 700; }
 .alert-card--man_down { border-color: rgba(255, 93, 114, 0.22); }
-.alert-card--signal_lost { border-color: rgba(128, 144, 168, 0.22); } /* Il signal lost ora è grigio discreto */
+.alert-card--signal_lost { border-color: rgba(128, 144, 168, 0.22); } /* Signal lost is now a discreet gray */
 
 .action-button, .context-menu__button { border: 1px solid rgba(154, 167, 190, 0.22); border-radius: 999px; padding: 8px 11px; background: rgba(8, 16, 26, 0.92); color: var(--text); font: inherit; cursor: pointer; }
 .action-button:hover, .context-menu__button:hover { border-color: rgba(45, 213, 138, 0.45); }

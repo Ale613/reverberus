@@ -72,7 +72,7 @@ def check_man_down_event(current_lat: float, current_lon: float) -> bool:
     delta_lon = abs(current_lon - _last_lon)
     
     if delta_lat < 1e-6 and delta_lon < 1e-6:
-        # L'operatore è nella stessa identica posizione. Da quanto tempo?
+        # The operator is in the exact same location. How long has that been the case?
         if current_time - _last_move_time >= 12.0:
             return True 
     else:

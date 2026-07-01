@@ -90,9 +90,9 @@ def main() -> None:
                     
                     print(f"[TELEMETRY] Received from {operator_id}: {data}")
                     
-                    # Logica di transizione degli stati di emergenza
+                    # Emergency state transition logic
                     if current_status == "EMERGENCY":
-                        # Se non era già in emergenza, lancia l'allarme
+                        # If the operator was not already in an emergency state, trigger the alert
                         if operator_emergency_states.get(operator_id) != "EMERGENCY":
                             operator_emergency_states[operator_id] = "EMERGENCY"
                             display_alert(operator_id, "MAN_DOWN")
@@ -110,7 +110,7 @@ def main() -> None:
                             cloud_publisher.put(cloud_payload)
                             
                     elif current_status == "OK":
-                        # Se era in emergenza e ora è OK, significa che ha ripreso a muoversi
+                        # If the operator was in an emergency state and is now OK, they have resumed moving
                         if operator_emergency_states.get(operator_id) == "EMERGENCY":
                             operator_emergency_states[operator_id] = "OK"
                             display_alert(operator_id, "RESUMED MOVING")
