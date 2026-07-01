@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.env/
+
+# IDE / Editor folders (Visual Studio Code, PyCharm, etc.)
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Zenoh / Networking / Local files
+*.db
+*.log
+config.json
+rmw_zenoh_session.json
+zenohd.exe
+
+# Personal / Sensitive data
+.secret/
+credentials.py
